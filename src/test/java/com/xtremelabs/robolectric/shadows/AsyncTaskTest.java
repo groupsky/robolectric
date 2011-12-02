@@ -103,6 +103,60 @@ public class AsyncTaskTest {
                 "onPostExecute done");
     }
 
+    @Test(expected=MyRuntimeException.class)
+    public void exceptionInPreExecute() {
+        AsyncTask<String, String, String> asyncTask = new MyAsyncTask() {
+            @Override
+            protected void onPreExecute() {
+                throw new MyRuntimeException();
+            }
+        };
+
+        asyncTask.execute("a");
+    }
+
+    @Test(expected=MyRuntimeException.class)
+    public void exceptionInBackground() {
+        AsyncTask<String, String, String> asyncTask = new MyAsyncTask() {
+            @Override
+            protected String doInBackground(String... strings) {
+                throw new MyRuntimeException();
+            }
+        };
+
+        asyncTask.execute("a");
+        Robolectric.runBackgroundTasks();
+    }
+
+    @Test(expected = MyRuntimeException.class)
+    public void exceptionInPostExecute() {
+        AsyncTask<String, String, String> asyncTask = new MyAsyncTask() {
+            @Override
+            protected void onPostExecute(String s) {
+                throw new MyRuntimeException();
+            }
+        };
+
+        asyncTask.execute("a");
+        Robolectric.runBackgroundTasks();
+        Robolectric.runUiThreadTasks();
+    }
+
+    @Test(expected=MyRuntimeException.class)
+    public void exceptionInCanceled() {
+        AsyncTask<String, String, String> asyncTask = new MyAsyncTask() {
+            @Override
+            protected void onCancelled() {
+                throw new MyRuntimeException();
+            }
+        };
+
+        asyncTask.execute("a");
+        asyncTask.cancel(true);
+        Robolectric.runBackgroundTasks();
+        Robolectric.runUiThreadTasks();
+    }
+
     private class MyAsyncTask extends AsyncTask<String, String, String> {
         @Override protected void onPreExecute() {
             transcript.add("onPreExecute");
@@ -124,5 +178,10 @@ public class AsyncTaskTest {
         @Override protected void onCancelled() {
         	transcript.add("onCancelled");
         }
+    }
+
+    @SuppressWarnings("serial")
+    private class MyRuntimeException extends RuntimeException {
+
     }
 }
